@@ -14,10 +14,12 @@ bptest <- function(formula, varformula = NULL, studentize = TRUE,
            else model.matrix(varformula, data = data)
     wts <- weights(formula)
   } else {
+    ## do.call() passes the weights vector itself, model.frame() would
+    ## otherwise look up the symbol 'weights' in 'data'
     mf <- if(is.null(weights)) {
       model.frame(formula, data = data)
     } else {
-      model.frame(formula, weights = weights, data = data)
+      do.call("model.frame", list(formula = formula, data = data, weights = weights))
     }
     y <- model.response(mf)
     X <- model.matrix(formula, data = data)
@@ -30,30 +32,36 @@ bptest <- function(formula, varformula = NULL, studentize = TRUE,
   ## only use complete cases that are in both models
   if(!(all(c(row.names(X) %in% row.names(Z), row.names(Z) %in% row.names(X))))) {
     allnames <- row.names(X)[row.names(X) %in% row.names(Z)]
+    wts <- wts[row.names(X) %in% row.names(Z)]
     X <- X[allnames,]
     Z <- Z[allnames,]
     y <- y[allnames]
-    wts <- wts[row.names(X) %in% row.names(Z)]
   }
 
   ## need at least one intercept plus one regressor
   if(ncol(Z) < 2L) stop("the auxiliary variance regression requires at least an intercept and a regressor")
    
   k <- ncol(X)
-  n <- sum(wts > 0) ## nrow(X)
 
-  resi <- lm.wfit(X, y, wts)$residuals
-  sigma2 <- sum(wts * resi^2)/n
+  ## weighted least squares is OLS on the data scaled by sqrt(wts), whose
+  ## errors are homoskedastic under H0: use the scaled residuals
+  ## sqrt(wts) * (y - X b) in the auxiliary regression (observations with
+  ## zero weight are dropped)
+  ok <- wts > 0
+  resi <- sqrt(wts[ok]) * lm.wfit(X, y, wts)$residuals[ok]
+  Z <- Z[ok, , drop = FALSE]
+  n <- length(resi)
+  sigma2 <- sum(resi^2)/n
 
   if(studentize) {
     w <- resi^2 - sigma2
-    aux <- lm.wfit(Z, w, wts)    
-    bp <- n * sum(wts * aux$fitted.values^2)/sum(w^2)
+    aux <- lm.fit(Z, w)
+    bp <- n * sum(aux$fitted.values^2)/sum(w^2)
     method <- "studentized Breusch-Pagan test"
   } else {
     f <- resi^2/sigma2 -1
-    aux <- lm.wfit(Z, f, wts)
-    bp <- 0.5 * sum(wts * aux$fitted.values^2)
+    aux <- lm.fit(Z, f)
+    bp <- 0.5 * sum(aux$fitted.values^2)
     method <- "Breusch-Pagan test"
   }
 
