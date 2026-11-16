@@ -5,6 +5,10 @@ reset <- resettest <- function(formula, power = 2:3,
   dname <- paste(deparse(substitute(formula)))
 
   if(!inherits(formula, "formula")) {
+    if(!is.null(w <- weights(formula))) {
+      if(!isTRUE(all.equal(as.vector(w), rep(1L, length(w)))))
+        stop("weighted regressions are not supported")
+    }
     mf <- model.frame(formula)
     X <- if(is.matrix(formula$x))
            formula$x

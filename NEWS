@@ -1,3 +1,12 @@
+Changes in Version 0.9-41
+
+  * bgtest(), gqtest(), harvtest(), hmctest(), raintest(), resettest(),
+    jtest(), coxtest(), and petest() silently ignored the weights of weighted
+    "lm" objects and tested the unweighted regression instead (and
+    resettest(..., type = "regressor") also took powers of the weights).
+    Like dwtest(), they now stop with an error for weighted regressions.
+
+
 Changes in Version 0.9-40
 
   * bptest() now optionally also accepts a "weights" argument and processes

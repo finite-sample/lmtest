@@ -3,6 +3,10 @@ bgtest <- function(formula, order = 1, order.by = NULL, type = c("Chisq", "F"), 
   dname <- paste(deparse(substitute(formula)))
 
   if(!inherits(formula, "formula")) {
+    if(!is.null(w <- weights(formula))) {
+      if(!isTRUE(all.equal(as.vector(w), rep(1L, length(w)))))
+        stop("weighted regressions are not supported")
+    }
     X <- if(is.matrix(formula$x))
            formula$x
          else model.matrix(terms(formula), model.frame(formula))
