@@ -1,3 +1,15 @@
+Changes in Version 0.9-41
+
+  * lrtest() and waldtest() refitted the reduced model on the wrong observations
+    when it was specified by an update (formula, character, or number), the
+    reduced model could use more observations than the full model (e.g., the
+    dropped variable has missing values), and the reduced model itself had
+    dropped some rows (e.g., missing values in the response). The logical
+    subset of length nobs() was recycled over all rows of the data. This
+    changed the log-likelihood and hence the lrtest() statistic; the Wald
+    statistic itself was not affected. Now the rows are selected by row name.
+
+
 Changes in Version 0.9-40
 
   * bptest() now optionally also accepts a "weights" argument and processes

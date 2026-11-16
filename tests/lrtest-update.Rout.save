@@ -1,0 +1,85 @@
+
+R version 4.6.0 (2026-04-24) -- "Because it was There"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## Reduced models specified by an update must be refitted on exactly the
+> ## observations of the full model, also when the reduced model alone would
+> ## use more observations and itself drops rows with missing values.
+> library("lmtest")
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+> 
+> set.seed(1)
+> d <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
+> d$y <- 1 + 0.5 * d$x1 + d$x2 + rnorm(60)
+> d$y[c(3, 17, 40)] <- NA
+> d$x1[c(8, 50)] <- NA
+> 
+> m1 <- lm(y ~ x1 + x2, data = d)
+> m0 <- lm(y ~ x2, data = d[row.names(model.frame(m1)), ])
+> 
+> lr <- lrtest(m1, m0)
+> lrtest(m1, "x1")
+Likelihood ratio test
+
+Model 1: y ~ x1 + x2
+Model 2: y ~ x2
+  #Df  LogLik Df  Chisq Pr(>Chisq)   
+1   4 -79.367                        
+2   3 -83.496 -1 8.2582   0.004057 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> lrtest(m1, . ~ . - x1)
+Likelihood ratio test
+
+Model 1: y ~ x1 + x2
+Model 2: y ~ x2
+  #Df  LogLik Df  Chisq Pr(>Chisq)   
+1   4 -79.367                        
+2   3 -83.496 -1 8.2582   0.004057 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> waldtest(m1, "x1")
+Wald test
+
+Model 1: y ~ x1 + x2
+Model 2: y ~ x2
+  Res.Df Df      F   Pr(>F)   
+1     52                      
+2     53 -1 8.4244 0.005419 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> stopifnot(
++   all.equal(lrtest(m1, "x1")[2, "Chisq"], lr[2, "Chisq"]),
++   all.equal(lrtest(m1, . ~ . - x1)[2, "Chisq"], lr[2, "Chisq"]),
++   all.equal(lrtest(m1, 1)[2, "Chisq"], lr[2, "Chisq"]),
++   all.equal(waldtest(m1, "x1")[2, "Res.Df"], df.residual(m0))
++ )
+> 
+> ## same with non-default row names (data subset beforehand)
+> d2 <- d[-(1:5), ]
+> m1 <- lm(y ~ x1 + x2, data = d2)
+> m0 <- lm(y ~ x2, data = d2[row.names(model.frame(m1)), ])
+> stopifnot(all.equal(lrtest(m1, "x1")[2, "Chisq"], lrtest(m1, m0)[2, "Chisq"]))
+> 
