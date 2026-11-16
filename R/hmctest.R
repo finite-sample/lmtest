@@ -4,6 +4,10 @@ hmctest <- function(formula, point = 0.5, order.by = NULL, simulate.p = TRUE,
   dname <- paste(deparse(substitute(formula)))
   
   if(!inherits(formula, "formula")) {
+    if(!is.null(w <- weights(formula))) {
+      if(!isTRUE(all.equal(as.vector(w), rep(1L, length(w)))))
+        stop("weighted regressions are not supported")
+    }
     X <- if(is.matrix(formula$x))
            formula$x
          else model.matrix(terms(formula), model.frame(formula))

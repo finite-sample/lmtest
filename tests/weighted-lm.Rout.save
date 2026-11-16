@@ -1,0 +1,57 @@
+
+R version 4.6.0 (2026-04-24) -- "Because it was There"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## Diagnostic tests that do not use regression weights must not silently
+> ## test the unweighted regression when given a weighted "lm" object.
+> library("lmtest")
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+> 
+> set.seed(1)
+> d <- data.frame(x = runif(50), z = rnorm(50), w = runif(50, 0.5, 3))
+> d$y <- 1 + d$x + rnorm(50, sd = 1 / sqrt(d$w))
+> mw <- lm(y ~ x + z, data = d, weights = w)
+> m1 <- lm(y ~ x + z, data = d, weights = rep(1, 50))
+> m <- lm(y ~ x + z, data = d)
+> 
+> fails <- function(expr) {
++   e <- try(expr, silent = TRUE)
++   inherits(e, "try-error") && grepl("weighted regressions", e)
++ }
+> stopifnot(
++   fails(bgtest(mw)), fails(gqtest(mw)), fails(harvtest(mw)), fails(hmctest(mw)),
++   fails(raintest(mw)), fails(resettest(mw)), fails(dwtest(mw)),
++   fails(jtest(mw, lm(y ~ x, data = d))), fails(coxtest(lm(y ~ x, data = d), mw)),
++   fails(petest(lm(exp(y) ~ x, data = d, weights = w), lm(y ~ x, data = d)))
++ )
+> 
+> ## unit weights are still accepted and give the unweighted results
+> stopifnot(
++   all.equal(bgtest(m1)$statistic, bgtest(m)$statistic),
++   all.equal(gqtest(m1)$statistic, gqtest(m)$statistic),
++   all.equal(resettest(m1)$statistic, resettest(m)$statistic),
++   all.equal(jtest(m1, lm(y ~ x, data = d)), jtest(m, lm(y ~ x, data = d)))
++ )
+> 

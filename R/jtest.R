@@ -19,6 +19,10 @@ jtest <- function(formula1, formula2, data = list(), vcov. = NULL, ...)
   } else {
   ## 2. if not, go via row names
     if(!inherits(formula1, "formula")) {
+      if(!is.null(w <- weights(formula1))) {
+        if(!isTRUE(all.equal(as.vector(w), rep(1L, length(w)))))
+          stop("weighted regressions are not supported")
+      }
       mf <- model.frame(formula1)
       X <- if(is.matrix(formula1$x)) formula1$x else model.matrix(terms(formula1), mf)
       y <- if(is.vector(formula1$y)) formula1$y else model.response(mf)
@@ -31,6 +35,10 @@ jtest <- function(formula1, formula2, data = list(), vcov. = NULL, ...)
     }  
 
     if(!inherits(formula2, "formula")) {
+      if(!is.null(w <- weights(formula2))) {
+        if(!isTRUE(all.equal(as.vector(w), rep(1L, length(w)))))
+          stop("weighted regressions are not supported")
+      }
       mf <- model.frame(formula2)
       Z <- if(is.matrix(formula2$x)) formula2$x else model.matrix(terms(formula2), mf)
       y2 <- if(is.vector(formula2$y)) formula2$y else model.response(mf)
