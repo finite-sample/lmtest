@@ -101,7 +101,9 @@ lrtest.default <- function(object, ..., name = NULL)
       if(ns[1] != ns[i]) {
         if(no.update[i]) stop("models were not all fitted to the same size of dataset")
 	  else {
-	    commonobs <- row.names(model.frame(objects[[i]])) %in% row.names(model.frame(objects[[i-1]]))
+	    ## select the observations of the previous model by row name: a logical
+	    ## vector of length nobs(objects[[i]]) would be recycled over all rows of the data
+	    commonobs <- row.names(model.frame(objects[[i-1]]))
 	    objects[[i]] <- eval(substitute(update(objects[[i]], subset = commonobs),
 	      list(commonobs = commonobs)))
 	    if(nobs0(objects[[i]]) != ns[1]) stop("models could not be fitted to the same size of dataset")
