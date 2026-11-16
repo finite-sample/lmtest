@@ -1,3 +1,16 @@
+Changes in Version 0.9-41
+
+  * bptest() computed wrong statistics for weighted "lm" objects (and for the
+    "weights" argument), introduced in 0.9-40: the auxiliary regression mixed
+    weighted and unweighted sums of squares, so that, e.g., multiplying all
+    weights by a constant changed the statistic although the fitted model is
+    unchanged. Now the test is applied to the residuals sqrt(w) * (y - X b)
+    of the equivalent unweighted (scaled) regression. The non-studentized
+    statistic agrees with car::ncvTest() for weighted models. Also,
+    bptest(formula, weights = ...) now uses the weights vector supplied
+    (previously model.frame() looked up a variable called "weights").
+
+
 Changes in Version 0.9-40
 
   * bptest() now optionally also accepts a "weights" argument and processes
